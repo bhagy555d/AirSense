@@ -1,121 +1,85 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import axios from 'axios';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Function to pick the right color icon based on AQI value
+const getMarkerIcon = (aqi) => {
+  let color = 'green'; 
+  if (!aqi || aqi <= 50) color = 'green';
+  else if (aqi <= 100) color = 'gold';
+  else if (aqi <= 150) color = 'orange';
+  else if (aqi <= 200) color = 'red';
+  else color = 'violet';
+
+  return new L.Icon({
+    iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+};
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [zones, setZones] = useState([]);
+  const indiaCenter = [20.5937, 78.9629];
+
+  useEffect(() => {
+    const fetchZones = async () => {
+      try {
+        const response = await axios.get('http://127.0.0.1:5000/api/zones');
+        setZones(response.data);
+      } catch (error) {
+        console.error("Error fetching stations:", error);
+      }
+    };
+    fetchZones();
+  }, []);
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div style={{ backgroundColor: '#1a1a1a', minHeight: '100vh', color: 'white', fontFamily: 'sans-serif' }}>
+      <header style={{ textAlign: 'center', padding: '20px', borderBottom: '1px solid #333' }}>
+        <h1 style={{ margin: 0, color: '#4db8ff' }}>AirSense India</h1>
+        <p style={{ margin: '5px 0', opacity: 0.8 }}>National Real-Time Air Quality Monitoring System</p>
+      </header>
+      
+      <div style={{ height: '75vh', width: '95%', margin: '20px auto', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+        <MapContainer center={indiaCenter} zoom={5} style={{ height: '100%', width: '100%' }}>
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
 
-      <div className="ticks"></div>
+          {zones.map((zone) => (
+            <Marker 
+              key={zone._id} 
+              position={[zone.location.coordinates[1], zone.location.coordinates[0]]}
+              icon={getMarkerIcon(zone.aqiValue)}
+            >
+              <Popup>
+                <div style={{ color: '#333', textAlign: 'center' }}>
+                  <h3 style={{ margin: '0 0 5px 0' }}>{zone.name}</h3>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: zone.aqiValue > 100 ? '#e74c3c' : '#2ecc71' }}>
+                    AQI: {zone.aqiValue || 'N/A'}
+                  </div>
+                  <p style={{ fontSize: '12px', color: '#666' }}>
+                    Updated: {zone.lastUpdated ? new Date(zone.lastUpdated).toLocaleTimeString() : 'Just now'}
+                  </p>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <footer style={{ textAlign: 'center', padding: '10px', fontSize: '14px', opacity: 0.6 }}>
+        Connected to {zones.length} live stations across India.
+      </footer>
+    </div>
+  );
 }
 
-export default App
+export default App;

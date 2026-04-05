@@ -13,13 +13,13 @@ const fetchAQI = async () => {
 
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log("Connected to MongoDB... 🔗");
+    console.log("Connected to MongoDB... ");
 
     const response = await axios.get(url);
     let allRecords = response.data.records || [];
 
     if (allRecords.length === 0) {
-      console.log("⚠️ Govt API empty. Using MOCK DATA...");
+      console.log(" Govt API empty. Using MOCK DATA...");
       allRecords = [
         { city: "Nagpur", station: "Civil Lines, Nagpur", avg_value: "58" },
         { city: "Nagpur", station: "GPO, Nagpur", avg_value: "72" }
@@ -35,7 +35,7 @@ const fetchAQI = async () => {
       let zone = await Zone.findOne({ name: s.station });
       
       if (!zone) {
-        console.log(`📝 Creating new Zone record for ${s.station}...`);
+        console.log(`Creating new Zone record for ${s.station}...`);
         zone = await Zone.create({
           name: s.station,
           city: "Nagpur",
@@ -49,15 +49,15 @@ const fetchAQI = async () => {
         aqi: parseInt(s.avg_value) || 0,
         timestamp: new Date()
       });
-      console.log(`✅ Saved Reading for ${s.station}`);
+      console.log(`Saved Reading for ${s.station}`);
     }
 
     console.log("--- Sync Complete! ---");
   } catch (error) {
-    console.error("Fetch Failed ❌:", error.message);
+    console.error("Fetch Failed :", error.message);
   } finally {
     mongoose.connection.close();
-    console.log("Database connection closed. 😴");
+    console.log("Database connection closed. ");
   }
 };
 
