@@ -3,9 +3,8 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
 
-// Import your Models (Ensure these filenames match your folders!)
+// Import your Models
 import Zone from "./models/Zone.js"; 
-import Reading from "./models/Reading.js"; 
 
 dotenv.config();
 
@@ -22,21 +21,7 @@ mongoose.connect(process.env.MONGO_URI)
 
 // --- API ROUTES ---
 
-app.get("/add-custom-zone", async (req, res) => {
-  const { name, lat, lng } = req.query;
-  try {
-    const zone = new Zone({
-      name: name || "New Station",
-      city: "Nagpur",
-      location: { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] }
-    });
-    await zone.save();
-    res.send(`Added ${name} at ${lat}, ${lng}`);
-  } catch (error) {
-    res.status(500).send(error.message);
-  }
-});
-// 1. Route to get all Zones (This is what the Map needs!)
+// 1. Route to get all Zones for the Map
 app.get("/api/zones", async (req, res) => {
   try {
     const zones = await Zone.find();
@@ -46,12 +31,7 @@ app.get("/api/zones", async (req, res) => {
   }
 });
 
-// 2. Start the Server (The "Listening" part)
-const PORT = 5000;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`AirSense API is live at http://localhost:${PORT}`);
-    console.log(` Map data available at http://localhost:${PORT}/api/zones`);
-});
+// 2. Route to Seed/Sync National Data with Colors
 app.get("/sync-india", async (req, res) => {
   const indiaStations = [
     { name: "Anand Vihar, Delhi", city: "Delhi", lat: 28.6476, lng: 77.3158 },
@@ -61,7 +41,8 @@ app.get("/sync-india", async (req, res) => {
     { name: "Victoria, Kolkata", city: "Kolkata", lat: 22.5448, lng: 88.3426 },
     { name: "Sector 25, Chandigarh", city: "Chandigarh", lat: 30.7500, lng: 76.7667 },
     { name: "Bapu Nagar, Jaipur", city: "Jaipur", lat: 26.8900, lng: 75.8100 },
-    { name: "Gomti Nagar, Lucknow", city: "Lucknow", lat: 26.8467, lng: 80.9467 }
+    { name: "Gomti Nagar, Lucknow", city: "Lucknow", lat: 26.8467, lng: 80.9467 },
+    { name: "Civil Lines, Nagpur", city: "Nagpur", lat: 21.1500, lng: 79.0800 }
   ];
 
   try {
@@ -69,18 +50,29 @@ app.get("/sync-india", async (req, res) => {
       updateOne: {
         filter: { name: st.name },
         update: {
-          name: st.name,
-          city: st.city,
-          location: { type: 'Point', coordinates: [st.lng, st.lat] },
-          active: true
+          $set: { 
+            name: st.name,
+            city: st.city,
+            location: { type: 'Point', coordinates: [st.lng, st.lat] },
+            active: true,
+            // Generates a random AQI for testing colors
+            aqiValue: Math.floor(Math.random() * 250) + 20 
+          }
         },
         upsert: true
       }
     }));
 
     await Zone.bulkWrite(ops);
-    res.send("National Data Seeded! Refresh your map and zoom out.");
+    res.send("<h1>Success!</h1><p>National Data Seeded with AQI Values. Refresh your React app!</p>");
   } catch (error) {
     res.status(500).send("Database error: " + error.message);
   }
+});
+
+// Start the Server
+const PORT = 5000;
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(` AirSense API is live at http://localhost:${PORT}`);
+    console.log(` Map data available at http://localhost:${PORT}/api/zones`);
 });

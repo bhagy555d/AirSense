@@ -1,18 +1,17 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const zoneSchema = new mongoose.Schema({
-  name: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
   city: { type: String, required: true },
-  // GeoJSON Point for mapping
   location: {
     type: { type: String, default: 'Point' },
-    coordinates: { type: [Number], required: true } // [Longitude, Latitude]
+    coordinates: { type: [Number], required: true } // [longitude, latitude]
   },
-  stationId: { type: String }, // To link with CPCB API IDs
+  aqiValue: { type: Number, default: 0 },   
   active: { type: Boolean, default: true }
 }, { timestamps: true });
 
-// This helps in searching zones by location
-zoneSchema.index({ location: "2dsphere" });
+// Check if the model already exists to prevent recompilation errors during development with hot-reloading
+const Zone = mongoose.models.Zone || mongoose.model('Zone', zoneSchema);
 
-export default mongoose.model("Zone", zoneSchema);
+export default Zone;
