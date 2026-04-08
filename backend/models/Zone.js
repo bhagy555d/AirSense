@@ -12,6 +12,6 @@ const zoneSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Check if the model already exists to prevent recompilation errors during development with hot-reloading
-const Zone = mongoose.models.Zone || mongoose.model('Zone', zoneSchema);
+const zone = mongoose.models.Zone || mongoose.model('Zone', zoneSchema);
 
-export default Zone;
+export default zone;

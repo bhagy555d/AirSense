@@ -2,9 +2,10 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import axios from 'axios'; // CRITICAL: Added this import
 
 // Import your Models
-import Zone from "./models/Zone.js"; 
+import Zone from './models/Zone.js';
 
 dotenv.config();
 
@@ -17,7 +18,7 @@ app.use(express.json());
 // Database Connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log(" MongoDB Connected"))
-  .catch(err => console.error(" MongoDB Error: ", err));
+  .catch(err => console.error("MongoDB Error: ", err));
 
 // --- API ROUTES ---
 
@@ -31,48 +32,50 @@ app.get("/api/zones", async (req, res) => {
   }
 });
 
-// 2. Route to Seed/Sync National Data with Colors
+// 2. Route to Fetch LIVE Data from WAQI (CPCB Source)
 app.get("/sync-india", async (req, res) => {
-  const indiaStations = [
-    { name: "Anand Vihar, Delhi", city: "Delhi", lat: 28.6476, lng: 77.3158 },
-    { name: "Bandra, Mumbai", city: "Mumbai", lat: 19.0522, lng: 72.8258 },
-    { name: "City Railway Station, Bangalore", city: "Bangalore", lat: 12.9733, lng: 77.5670 },
-    { name: "Manali, Chennai", city: "Chennai", lat: 13.1667, lng: 80.2667 },
-    { name: "Victoria, Kolkata", city: "Kolkata", lat: 22.5448, lng: 88.3426 },
-    { name: "Sector 25, Chandigarh", city: "Chandigarh", lat: 30.7500, lng: 76.7667 },
-    { name: "Bapu Nagar, Jaipur", city: "Jaipur", lat: 26.8900, lng: 75.8100 },
-    { name: "Gomti Nagar, Lucknow", city: "Lucknow", lat: 26.8467, lng: 80.9467 },
-    { name: "Civil Lines, Nagpur", city: "Nagpur", lat: 21.1500, lng: 79.0800 }
-  ];
+  const TOKEN = "980b9f8a35129bda30f4a9d0c7a7b3f618ea9665";
+  const cities = ["Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Chandigarh", "Jaipur", "Lucknow", "Nagpur", "Pune", "Hyderabad", "Ahmedabad", "Surat", "Patna", "Kochi", "Indore", "Bhopal", "Visakhapatnam"];
 
   try {
-    const ops = indiaStations.map(st => ({
-      updateOne: {
-        filter: { name: st.name },
-        update: {
-          $set: { 
-            name: st.name,
-            city: st.city,
-            location: { type: 'Point', coordinates: [st.lng, st.lat] },
-            active: true,
-            // Generates a random AQI for testing colors
-            aqiValue: Math.floor(Math.random() * 250) + 20 
-          }
-        },
-        upsert: true
-      }
-    }));
+    await Zone.deleteMany({}); // Start fresh
 
-    await Zone.bulkWrite(ops);
-    res.send("<h1>Success!</h1><p>National Data Seeded with AQI Values. Refresh your React app!</p>");
+    const ops = [];
+    for (const city of cities) {
+      try {
+        const response = await axios.get(`https://api.waqi.info/feed/${city}/?token=${TOKEN}`);
+        const data = response.data.data;
+
+        if (response.data.status === "ok" && data.city) {
+          ops.push({
+            name: data.city.name,
+            city: city, // Use our search term as the city name
+            location: {
+              type: 'Point',
+              coordinates: [data.city.geo[1], data.city.geo[0]]
+            },
+            aqiValue: data.aqi,
+            active: true
+          });
+          console.log(`Synced: ${city}`);
+        } else {
+          console.log(`Skipped: ${city} (No data available)`);
+        }
+      } catch (err) {
+        console.log(`Error fetching ${city}: ${err.message}`);
+      }
+    }
+
+    if (ops.length > 0) await Zone.insertMany(ops);
+    res.send(`<h1>Sync Done!</h1><p>Successfully added ${ops.length} cities.</p>`);
   } catch (error) {
-    res.status(500).send("Database error: " + error.message);
+    res.status(500).send(error.message);
   }
 });
 
 // Start the Server
 const PORT = 5000;
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(` AirSense API is live at http://localhost:${PORT}`);
-    console.log(` Map data available at http://localhost:${PORT}/api/zones`);
+  console.log(`AirSense API is live at http://localhost:${PORT}`);
+  console.log(`Map data available at http://localhost:${PORT}/api/zones`);
 });

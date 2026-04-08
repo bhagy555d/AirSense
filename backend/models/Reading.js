@@ -16,7 +16,7 @@ const readingSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now }
 });
 
-// 🔥 THE PERFORMANCE TRICK: Compound Index
+//  THE PERFORMANCE TRICK: Compound Index
 // This makes fetching "last 24 hours of data for Zone X" super fast.
 readingSchema.index({ zoneId: 1, timestamp: -1 });
 

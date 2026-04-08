@@ -1,0 +1,133 @@
+.sidebar {
+    width: 30%;
+    height: 100vh;
+    background: #1a1a1e;
+    /* Solid dark background for better contrast */
+    color: #ffffff;
+    padding: 30px 20px;
+    border-left: 1px solid #333;
+    overflow-y: auto;
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
+}
+
+.details h2 {
+    font-size: 2rem;
+    margin-bottom: 5px;
+    color: #fff;
+}
+
+.station-name {
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 25px;
+}
+
+.aqi-card {
+    background: #25252b;
+    border-radius: 15px;
+    padding: 30px;
+    text-align: center;
+    margin: 20px 0;
+    border: 1px solid #3d3d45;
+}
+
+.aqi-value {
+    font-size: 4rem;
+    /* Larger font for the main metric */
+    font-weight: 800;
+    margin: 10px 0;
+}
+
+.status {
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.pollutant-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.p-tile {
+    background: #25252b;
+    padding: 15px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid #333;
+    transition: transform 0.2s ease;
+}
+
+.p-tile:hover {
+    transform: translateY(-5px);
+    border-color: #555;
+}
+
+.p-tile span {
+    font-size: 0.8rem;
+    color: #aaa;
+    margin-bottom: 5px;
+}
+
+.p-tile strong {
+    font-size: 1.4rem;
+    color: #fff;
+}
+
+/* Dynamic Classes used by getStatus logic */
+.txt-green {
+    color: #00e400;
+}
+
+.txt-yellow {
+    color: #ffff00;
+}
+
+.txt-orange {
+    color: #ff7e00;
+}
+
+.txt-red {
+    color: #ff0000;
+}
+.advisory-box {
+    margin-top: 30px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    border-left: 4px solid #555;
+}
+
+.advisory-box h4 {
+    font-size: 0.9rem;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.advisory-box p {
+    font-size: 1rem;
+    line-height: 1.4;
+    color: #ddd;
+}
+
+/* Ensure these match the classes in the JSX logic */
+.txt-green {
+    color: #00e400;
+}
+
+.txt-yellow {
+    color: #ffff00;
+}
+
+.txt-orange {
+    color: #ff7e00;
+}
+
+.txt-red {
+    color: #ff0000;
+}
